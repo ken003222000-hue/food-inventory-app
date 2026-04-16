@@ -394,7 +394,8 @@ async function onScanSuccess(code){
   document.getElementById('sr-code').textContent='バーコード: '+code;
 }
 async function lookupProduct(code){
-  try{const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const d=await r.json();if(d.status===1&&d.product){const p=d.product;return p.product_name_ja||p.product_name_en||p.product_name||null;}}catch(e){}
+  try{const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const d=await r.json();if(d.status===1&&d.product){const p=d.product;const name=p.product_name_ja||p.product_name_en||p.product_name||null;if(name)return name;}}catch(e){}
+  try{const r=await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code);const d=await r.json();if(d.code==='OK'&&d.items&&d.items.length>0){return d.items[0].title||null;}}catch(e){}
   return null;
 }
 function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
