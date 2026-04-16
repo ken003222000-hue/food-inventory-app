@@ -497,6 +497,8 @@ function init(){
     if(items.length!==before)needPush=true;
     lsSave();
   }
+  // 件数が異常に多い場合（移行バグによる膨張）は自動でINITIALにリセット
+  if(items.length>190){items=JSON.parse(JSON.stringify(INITIAL));lsSave();needPush=true;}
   renderAll();
   const key=getApiKey(),binId=getBinId();
   if(key&&binId&&needPush)cloudPush();else if(key&&binId)cloudPull();else if(key&&!binId)cloudPush();
