@@ -492,11 +492,6 @@ function init(){
   else{
     const before=items.length;
     items=dedupItems(items);
-    // migrate: add INITIAL items not yet in local data (match by name+location)
-    const keys=new Set(items.map(i=>i.name.trim()+'|'+i.location.trim()));
-    const maxId=items.reduce((m,i)=>Math.max(m,parseInt(i.id)||0),0);
-    let nextId=Math.max(maxId+1,9000);
-    INITIAL.forEach(ini=>{const k=ini.name.trim()+'|'+ini.location.trim();if(!keys.has(k)){const cp=Object.assign({},ini,{id:String(nextId++)});items.push(cp);keys.add(k);}});
     if(items.length!==before)needPush=true;
     lsSave();
   }
