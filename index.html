@@ -478,9 +478,11 @@ async function onScanSuccess(code){
 }
 async function lookupProduct(code){
   let brandFallback=null;
-  // 1. 楽天商品検索（JANコード直接検索・日本語名が最も正確）
+  const PROXY='https://corsproxy.io/?url=';
+  // 1. 楽天商品検索（JANコード直接検索・CORSプロキシ経由）
   try{
-    const r=await fetch('https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+encodeURIComponent(code)+'&hits=1');
+    const url='https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+encodeURIComponent(code)+'&hits=1';
+    const r=await fetch(PROXY+encodeURIComponent(url));
     const d=await r.json();
     if(d.Products&&d.Products.length>0){const n=d.Products[0].Product.productName;if(n)return n;}
   }catch(e){}
@@ -512,7 +514,7 @@ async function lookupProduct(code){
     const d=await r.json();
     if(d.code==='OK'&&d.items&&d.items.length>0){const n=d.items[0].title;if(n)return n;}
   }catch(e){}
-  return null;
+  return brandFallback;
 }
 function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
 function retryScanner(){document.getElementById('scan-result').classList.remove('show');if(scanner)try{scanner.resume();}catch(e){}}
