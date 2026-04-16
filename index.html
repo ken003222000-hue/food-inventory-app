@@ -542,7 +542,8 @@ function updateHeader(){
 function renderAll(){
   const st=updateHeader();
   const fst=window._fst||'';
-  document.getElementById('spills').innerHTML=Object.entries(SC).map(([k,c])=>{const a=fst===k;return`<button class="sp" onclick="toggleFst('${k}')" style="background:${a?c.color:'#f8fafc'};color:${a?'#fff':'#374151'};border-color:${a?c.color:c.border}">${c.label} ${st[k]}</button>`;}).join('');
+  const allActive=fst==='';
+  document.getElementById('spills').innerHTML=`<button class="sp" onclick="toggleFst('')" style="background:${allActive?'#3b82f6':'#f8fafc'};color:${allActive?'#fff':'#374151'};border-color:${allActive?'#3b82f6':'#93c5fd'}">全て ${items.length}</button>`+Object.entries(SC).map(([k,c])=>{const a=fst===k;return`<button class="sp" onclick="toggleFst('${k}')" style="background:${a?c.color:'#f8fafc'};color:${a?'#fff':'#374151'};border-color:${a?c.color:c.border}">${c.label} ${st[k]}</button>`;}).join('');
   const locs=[...new Set(items.map(i=>i.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
   const curLoc=document.getElementById('floc').value;
   document.getElementById('floc').innerHTML='<option value="">📦 全場所</option>'+locs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
