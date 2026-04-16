@@ -447,7 +447,7 @@ async function cloudPush(){
 }
 function dedupItems(arr){
   const seen=new Set();
-  return arr.filter(i=>{const k=i.name.trim();if(seen.has(k))return false;seen.add(k);return true;});
+  return arr.filter(i=>{const k=i.name.trim()+'|'+i.location.trim();if(seen.has(k))return false;seen.add(k);return true;});
 }
 async function cloudPull(){
   const key=getApiKey(),binId=getBinId();if(!key||!binId)return;
@@ -487,21 +487,22 @@ function retryScanner(){document.getElementById('scan-result').classList.remove(
 function closeScanner(){document.getElementById('scan-ov').classList.remove('show');if(scanner){scanner.stop().then(()=>{scanner=null;}).catch(()=>{scanner=null;});}}
 
 function init(){
-  if(!lsLoad()){items=JSON.parse(JSON.stringify(INITIAL));lsSave();}
+  let needPush=false;
+  if(!lsLoad()){items=JSON.parse(JSON.stringify(INITIAL));lsSave();needPush=true;}
   else{
-    // まず重複除去
+    const before=items.length;
     items=dedupItems(items);
-    // migrate: add INITIAL items not yet in local data (match by name)
-    const names=new Set(items.map(i=>i.name));
+    // migrate: add INITIAL items not yet in local data (match by name+location)
+    const keys=new Set(items.map(i=>i.name.trim()+'|'+i.location.trim()));
     const maxId=items.reduce((m,i)=>Math.max(m,parseInt(i.id)||0),0);
     let nextId=Math.max(maxId+1,9000);
-    let added=0;
-    INITIAL.forEach(ini=>{if(!names.has(ini.name)){const cp=Object.assign({},ini,{id:String(nextId++)});items.push(cp);added++;}});
+    INITIAL.forEach(ini=>{const k=ini.name.trim()+'|'+ini.location.trim();if(!keys.has(k)){const cp=Object.assign({},ini,{id:String(nextId++)});items.push(cp);keys.add(k);}});
+    if(items.length!==before)needPush=true;
     lsSave();
   }
   renderAll();
   const key=getApiKey(),binId=getBinId();
-  if(key&&binId)cloudPull();else if(key&&!binId)cloudPush();
+  if(key&&binId&&needPush)cloudPush();else if(key&&binId)cloudPull();else if(key&&!binId)cloudPush();
   setInterval(()=>{if(getApiKey()&&getBinId())cloudPull();},SYNC_INTERVAL);
 }
 function updateHeader(){
