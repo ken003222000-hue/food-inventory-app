@@ -27,6 +27,17 @@ input,select{font-family:inherit}
 input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#1e293b}
 .fi{flex:1 1 150px}.fs{flex:1 1 120px}
 .list{padding:10px 12px;padding-bottom:40px}
+.tbl-wrap{overflow-x:auto;padding:8px 12px 40px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+.tbl th{background:#f1f5f9;color:#475569;font-weight:700;padding:9px 10px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;position:sticky;top:0;z-index:1}
+.tbl td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tbl tr:hover td{background:#f8fafc}
+.tbl .t-name{font-weight:600;color:#1e293b;min-width:120px}
+.tbl .t-exp{white-space:nowrap}
+.tbl .t-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.tbl .t-btn{background:none;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;margin-left:3px}
+.tbl .t-btn.edit{color:#2563eb;border-color:#93c5fd}
+.tbl .t-btn.del{color:#ef4444;border-color:#fca5a5}
 .card{background:#fff;border-radius:10px;padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);border:1.5px solid;border-left-width:4px}
 .ci{flex:1;min-width:0}
 .cn-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px}
@@ -122,6 +133,7 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
       <option value="name">商品名順</option>
       <option value="location">場所順</option>
     </select>
+    <button id="viewbtn" onclick="toggleView()" style="flex-shrink:0;padding:8px 12px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc;font-size:13px;cursor:pointer;white-space:nowrap">☰ 一覧</button>
   </div>
 </div>
 <div class="list" id="list"></div>
@@ -422,6 +434,8 @@ const INITIAL=[
 
 let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null,listMgrTarget='';
 let scanner=null,scannedCode='',scannedName='';
+let viewMode='card';
+function toggleView(){viewMode=viewMode==='card'?'table':'card';document.getElementById('viewbtn').textContent=viewMode==='card'?'☰ 一覧':'⊞ カード';renderList();}
 window._fst='';
 
 function parseExp(s){if(!s||!s.trim())return null;const m=s.trim().match(/^(\d{2})\/(\d{1,2})\/(\d{1,2})$/);if(!m)return null;return new Date(2000+parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));}
@@ -549,12 +563,22 @@ function renderList(){
     return 0;
   });
   const el=document.getElementById('list');
-  if(!list.length){el.innerHTML='<div class="empty">該当なし</div>';return;}
-  el.innerHTML=list.map(item=>{
-    const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
-    let ds='';if(days!==null){if(days<0)ds=' ('+Math.abs(days)+'日超過)';else if(days===0)ds=' (今日まで)';else ds=' あと'+days+'日';}
-    return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><div class="ci"><div class="cn-row"><span class="cn">${esc(item.name)}</span><span class="badge" style="background:${c.color}">${c.label}</span></div><div class="cmeta"><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">× ${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}</div>${item.note?`<div class="cnote">💬 ${esc(item.note)}</div>`:''}</div><div class="cbtns"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
-  }).join('');
+  if(!list.length){el.className='list';el.innerHTML='<div class="empty">該当なし</div>';return;}
+  if(viewMode==='table'){
+    el.className='tbl-wrap';
+    el.innerHTML='<table class="tbl"><thead><tr><th>状態</th><th>商品名</th><th>賞味期限</th><th>場所</th><th>個数</th><th>保存状態</th><th>備考</th><th></th></tr></thead><tbody>'+list.map(item=>{
+      const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
+      let ds='';if(days!==null){if(days<0)ds='<br><span style="color:'+c.color+';font-size:11px">'+Math.abs(days)+'日超過</span>';else if(days===0)ds='<br><span style="font-size:11px">今日まで</span>';else if(days<=30)ds='<br><span style="font-size:11px">あと'+days+'日</span>';}
+      return`<tr><td><span class="t-badge" style="background:${c.color}">${c.label}</span></td><td class="t-name">${esc(item.name)}</td><td class="t-exp">${fmtExp(item.expiry)||'-'}${ds}</td><td>${esc(item.location)}</td><td>${esc(item.qty)||'-'}</td><td>${esc(item.type)||'-'}</td><td style="color:#64748b;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.note)||''}</td><td style="white-space:nowrap"><button class="t-btn edit" onclick="openEdit('${item.id}')">編集</button><button class="t-btn del" onclick="openDel('${item.id}')">削除</button></td></tr>`;
+    }).join('')+'</tbody></table>';
+  } else {
+    el.className='list';
+    el.innerHTML=list.map(item=>{
+      const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
+      let ds='';if(days!==null){if(days<0)ds=' ('+Math.abs(days)+'日超過)';else if(days===0)ds=' (今日まで)';else ds=' あと'+days+'日';}
+      return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><div class="ci"><div class="cn-row"><span class="cn">${esc(item.name)}</span><span class="badge" style="background:${c.color}">${c.label}</span></div><div class="cmeta"><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">× ${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}</div>${item.note?`<div class="cnote">💬 ${esc(item.note)}</div>`:''}</div><div class="cbtns"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
+    }).join('');
+  }
 }
 function getLocs(){try{const s=localStorage.getItem(LSLOC);if(s){const p=JSON.parse(s);if(p.length)return p;}}catch(e){}const ls=[...new Set(items.map(i=>i.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));saveLocs(ls);return ls;}
 function saveLocs(ls){try{localStorage.setItem(LSLOC,JSON.stringify(ls));}catch(e){}}
