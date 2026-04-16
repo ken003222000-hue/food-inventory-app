@@ -137,9 +137,9 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
     </button>
     <div class="fg"><label class="fl">商品名 *</label><input class="fin" id="fn" placeholder="例：カレー職人中辛"></div>
     <div class="fg"><label class="fl">賞味期限</label><input class="fin" id="fe" placeholder="例：27/03/31"></div>
-    <div class="fg"><label class="fl">収納場所</label><input class="fin" id="fl2" placeholder="例：白コンテナA"></div>
+    <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><label class="fl" style="margin-bottom:0">収納場所</label><button type="button" onclick="openListMgr('loc')" style="font-size:11px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:3px 8px;color:#334155;cursor:pointer">管理</button></div><select class="fin" id="fl2" onchange="onSelChange('fl2','fl2-new')"></select><input class="fin" id="fl2-new" placeholder="新しい場所を入力" style="display:none;margin-top:6px"></div>
     <div class="fg"><label class="fl">個数</label><input class="fin" id="fq" placeholder="例：3"></div>
-    <div class="fg"><label class="fl">保存状態</label><input class="fin" id="ft" placeholder="例：パウチ・缶詰・袋"></div>
+    <div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><label class="fl" style="margin-bottom:0">保存状態</label><button type="button" onclick="openListMgr('type')" style="font-size:11px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:3px 8px;color:#334155;cursor:pointer">管理</button></div><select class="fin" id="ft" onchange="onSelChange('ft','ft-new')"></select><input class="fin" id="ft-new" placeholder="新しい保存状態を入力" style="display:none;margin-top:6px"></div>
     <div class="fg"><label class="fl">備考</label><input class="fin" id="fno" placeholder="例：１箱20入り"></div>
     <div class="mbtns">
       <button class="bcx" onclick="closeModal()">キャンセル</button>
@@ -206,8 +206,23 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 
 <div class="toast" id="toast"></div>
 
+<!-- List Manager Modal -->
+<div class="ovc" id="listmgr-modal" onclick="ovClick(event,'listmgr-modal')">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:380px;padding:22px 18px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div id="listmgr-title" style="font-size:16px;font-weight:700"></div>
+      <button class="xbtn" onclick="closeListMgr()">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="fin" id="listmgr-input" placeholder="新しい項目を入力" style="flex:1;padding:9px 12px;font-size:14px" onkeydown="if(event.key==='Enter')addListItem()">
+      <button onclick="addListItem()" style="background:#2563eb;color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer">追加</button>
+    </div>
+    <div id="listmgr-items"></div>
+  </div>
+</div>
+
 <script>
-const LSKEY='bichiku-items',LSBIN='bichiku-binid',LSAPI='bichiku-apikey';
+const LSKEY='bichiku-items',LSBIN='bichiku-binid',LSAPI='bichiku-apikey',LSLOC='bichiku-locs',LSTYPE='bichiku-types';
 const SYNC_INTERVAL=20000;
 const SC={
   expired:{label:"期限切れ",color:"#ef4444",border:"#fca5a5"},
@@ -341,7 +356,7 @@ const INITIAL=[
 {id:"185",name:"3年おでん缶",type:"缶",expiry:"28/12/01",qty:"12",location:"段ボールＷ",note:""},
 ];
 
-let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null;
+let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null,listMgrTarget='';
 let scanner=null,scannedCode='',scannedName='';
 window._fst='';
 
@@ -447,12 +462,27 @@ function renderList(){
     return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><div class="ci"><div class="cn-row"><span class="cn">${esc(item.name)}</span><span class="badge" style="background:${c.color}">${c.label}</span></div><div class="cmeta"><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">× ${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}</div>${item.note?`<div class="cnote">💬 ${esc(item.note)}</div>`:''}</div><div class="cbtns"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
   }).join('');
 }
-function openAdd(){editId=null;document.getElementById('mtitle').textContent='新しいアイテムを追加';document.getElementById('bsv').textContent='追加する';['fn','fe','fl2','fq','ft','fno'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal').classList.add('show');}
-function openEdit(id){const item=items.find(i=>i.id===id);if(!item)return;editId=id;document.getElementById('mtitle').textContent='アイテムを編集';document.getElementById('bsv').textContent='保存する';document.getElementById('fn').value=item.name||'';document.getElementById('fe').value=item.expiry||'';document.getElementById('fl2').value=item.location||'';document.getElementById('fq').value=item.qty||'';document.getElementById('ft').value=item.type||'';document.getElementById('fno').value=item.note||'';document.getElementById('modal').classList.add('show');}
+function getLocs(){try{const s=localStorage.getItem(LSLOC);if(s){const p=JSON.parse(s);if(p.length)return p;}}catch(e){}const ls=[...new Set(items.map(i=>i.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));saveLocs(ls);return ls;}
+function saveLocs(ls){try{localStorage.setItem(LSLOC,JSON.stringify(ls));}catch(e){}}
+function getTypes(){try{const s=localStorage.getItem(LSTYPE);if(s){const p=JSON.parse(s);if(p.length)return p;}}catch(e){}const ts=[...new Set(items.map(i=>i.type).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));saveTypes(ts);return ts;}
+function saveTypes(ts){try{localStorage.setItem(LSTYPE,JSON.stringify(ts));}catch(e){}}
+function populateSel(selId,newId,list,curVal){const sel=document.getElementById(selId);const ni=document.getElementById(newId);sel.innerHTML=(!list.includes(curVal)&&curVal?`<option value="${esc(curVal)}" selected>${esc(curVal)}</option>`:'')+list.map(v=>`<option value="${esc(v)}"${v===curVal?' selected':''}>${esc(v)}</option>`).join('')+'<option value="__new__">＋ 新しく追加...</option>';ni.style.display='none';ni.value='';}
+function onSelChange(selId,newId){const val=document.getElementById(selId).value;const ni=document.getElementById(newId);ni.style.display=val==='__new__'?'block':'none';if(val==='__new__')ni.focus();}
+function openListMgr(target){listMgrTarget=target;document.getElementById('listmgr-title').textContent=target==='loc'?'収納場所を管理':'保存状態を管理';document.getElementById('listmgr-input').value='';renderListMgrItems();document.getElementById('listmgr-modal').classList.add('show');}
+function closeListMgr(){document.getElementById('listmgr-modal').classList.remove('show');}
+function renderListMgrItems(){const list=listMgrTarget==='loc'?getLocs():getTypes();document.getElementById('listmgr-items').innerHTML=list.length?list.map((v,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9"><span style="font-size:14px">${esc(v)}</span><button onclick="deleteListItem(${i})" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:4px 10px;font-size:12px;color:#ef4444;cursor:pointer">削除</button></div>`).join(''):'<div style="color:#94a3b8;font-size:13px;padding:8px 0">まだ項目がありません</div>';}
+function addListItem(){const val=document.getElementById('listmgr-input').value.trim();if(!val)return;const list=listMgrTarget==='loc'?getLocs():getTypes();if(list.includes(val)){showToast('すでに存在します','#f97316');return;}list.push(val);list.sort((a,b)=>a.localeCompare(b,'ja'));if(listMgrTarget==='loc')saveLocs(list);else saveTypes(list);document.getElementById('listmgr-input').value='';renderListMgrItems();showToast('追加しました ✓');}
+function deleteListItem(idx){const list=listMgrTarget==='loc'?getLocs():getTypes();list.splice(idx,1);if(listMgrTarget==='loc')saveLocs(list);else saveTypes(list);renderListMgrItems();showToast('削除しました','#ef4444');}
+function openAdd(){editId=null;document.getElementById('mtitle').textContent='新しいアイテムを追加';document.getElementById('bsv').textContent='追加する';['fn','fe','fq','fno'].forEach(id=>document.getElementById(id).value='');populateSel('fl2','fl2-new',getLocs(),'');populateSel('ft','ft-new',getTypes(),'');document.getElementById('modal').classList.add('show');}
+function openEdit(id){const item=items.find(i=>i.id===id);if(!item)return;editId=id;document.getElementById('mtitle').textContent='アイテムを編集';document.getElementById('bsv').textContent='保存する';document.getElementById('fn').value=item.name||'';document.getElementById('fe').value=item.expiry||'';document.getElementById('fq').value=item.qty||'';document.getElementById('fno').value=item.note||'';populateSel('fl2','fl2-new',getLocs(),item.location||'');populateSel('ft','ft-new',getTypes(),item.type||'');document.getElementById('modal').classList.add('show');}
 function closeModal(){document.getElementById('modal').classList.remove('show');}
 async function handleSave(){
   const name=document.getElementById('fn').value.trim();if(!name)return;
-  const obj={name,expiry:document.getElementById('fe').value.trim(),location:document.getElementById('fl2').value.trim(),qty:document.getElementById('fq').value.trim(),type:document.getElementById('ft').value.trim(),note:document.getElementById('fno').value.trim()};
+  let loc=document.getElementById('fl2').value;
+  if(loc==='__new__'){loc=document.getElementById('fl2-new').value.trim();if(loc){const ls=getLocs();if(!ls.includes(loc)){ls.push(loc);ls.sort((a,b)=>a.localeCompare(b,'ja'));saveLocs(ls);}}}
+  let type=document.getElementById('ft').value;
+  if(type==='__new__'){type=document.getElementById('ft-new').value.trim();if(type){const ts=getTypes();if(!ts.includes(type)){ts.push(type);ts.sort((a,b)=>a.localeCompare(b,'ja'));saveTypes(ts);}}}
+  const obj={name,expiry:document.getElementById('fe').value.trim(),location:loc,qty:document.getElementById('fq').value.trim(),type,note:document.getElementById('fno').value.trim()};
   if(editId){items=items.map(i=>i.id===editId?{...i,...obj}:i);showToast('更新・保存しました ✓');}
   else{items=[...items,{id:String(nid++),...obj}];showToast('追加・保存しました ✓');}
   closeModal();lsSave();renderAll();cloudPush();
