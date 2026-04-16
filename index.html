@@ -479,21 +479,25 @@ async function onScanSuccess(code){
 function bcCacheGet(code){try{const c=JSON.parse(localStorage.getItem(LSBC)||'{}');return c[code]||null;}catch(e){return null;}}
 function bcCacheSave(code,name){try{const c=JSON.parse(localStorage.getItem(LSBC)||'{}');c[code]=name;localStorage.setItem(LSBC,JSON.stringify(c));}catch(e){}}
 async function lookupProduct(code){
-  // ローカル辞書を最優先
+  // 1. ローカル辞書を最優先
   const cached=bcCacheGet(code);if(cached)return cached;
-  let brandFallback=null;
-  // Open Food Facts 日本版
+  // 2. Keepa API（Amazon Japan商品データベース）
+  try{
+    const r=await fetch('https://api.keepa.com/product?key=qinrju1b6tek5lieroitbu9qdb6s2d400acqectrse1l97rvhqj4lm4oqceceu06&domain=5&code='+code);
+    const d=await r.json();
+    if(d.products&&d.products.length>0&&d.products[0].title){return d.products[0].title;}
+  }catch(e){}
+  // 3. Open Food Facts 日本版
   try{
     const r=await fetch('https://jp.openfoodfacts.org/api/v0/product/'+code+'.json');
     const d=await r.json();
     if(d.status===1&&d.product){
       const p=d.product;
-      const name=p.product_name_ja||p.product_name||p.product_name_en||p.abbreviated_product_name||null;
+      const name=p.product_name_ja||p.product_name||p.product_name_en||null;
       if(name)return name;
-      if(p.brands&&!brandFallback)brandFallback=p.brands.split(',')[0].trim();
     }
   }catch(e){}
-  return brandFallback;
+  return null;
 }
 function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
 function retryScanner(){document.getElementById('scan-result').classList.remove('show');if(scanner)try{scanner.resume();}catch(e){}}
