@@ -439,8 +439,9 @@ async function cloudPush(){
   const key=getApiKey();if(!key)return;
   const binId=getBinId();syncing=true;updateHeader();
   try{
-    if(binId){await fetch('https://api.jsonbin.io/v3/b/'+binId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Versioning':'false'},body:JSON.stringify({items})});}
-    else{const r=await fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'bichiku'},body:JSON.stringify({items})});const d=await r.json();if(d.metadata&&d.metadata.id)localStorage.setItem(LSBIN,d.metadata.id);}
+    const barcodeCache=JSON.parse(localStorage.getItem(LSBC)||'{}');
+    if(binId){await fetch('https://api.jsonbin.io/v3/b/'+binId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Versioning':'false'},body:JSON.stringify({items,barcodeCache})});}
+    else{const r=await fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'bichiku'},body:JSON.stringify({items,barcodeCache})});const d=await r.json();if(d.metadata&&d.metadata.id)localStorage.setItem(LSBIN,d.metadata.id);}
     lastSync=new Date();
   }catch(e){}
   syncing=false;updateHeader();
@@ -451,7 +452,7 @@ function dedupItems(arr){
 }
 async function cloudPull(){
   const key=getApiKey(),binId=getBinId();if(!key||!binId)return;
-  try{const r=await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{headers:{'X-Master-Key':key}});const d=await r.json();if(d.record&&d.record.items&&Array.isArray(d.record.items)){items=dedupItems(d.record.items);lsSave();lastSync=new Date();renderAll();}}catch(e){}
+  try{const r=await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{headers:{'X-Master-Key':key}});const d=await r.json();if(d.record&&d.record.items&&Array.isArray(d.record.items)){items=dedupItems(d.record.items);lsSave();if(d.record.barcodeCache&&typeof d.record.barcodeCache==='object'){localStorage.setItem(LSBC,JSON.stringify(d.record.barcodeCache));}lastSync=new Date();renderAll();}}catch(e){}
 }
 
 function openScanner(){
