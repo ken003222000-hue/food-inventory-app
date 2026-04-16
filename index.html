@@ -105,6 +105,7 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
       <div class="hd-sub" id="hd-sub">読み込み中…</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="exportJSON()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px" title="JSONエクスポート">📥</button>
       <button onclick="openSetup()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px">⚙️</button>
       <button class="btn-add" onclick="openAdd()">＋ 追加</button>
     </div>
@@ -563,6 +564,16 @@ async function handleSave(){
 function openDel(id){delId=id;document.getElementById('delmodal').classList.add('show');}
 function closeDelModal(){document.getElementById('delmodal').classList.remove('show');delId=null;}
 async function confirmDel(){items=items.filter(i=>i.id!==delId);closeDelModal();lsSave();renderAll();showToast('削除しました','#ef4444');cloudPush();}
+function exportJSON(){
+  const now=new Date();
+  const ts=now.getFullYear()+''+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'_'+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+  const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='food_inventory_'+ts+'.json';
+  a.click();
+  showToast('JSONをダウンロードしました','#2563eb');
+}
 function openSetup(){document.getElementById('apikey-input').value=getApiKey();document.getElementById('setup-status').textContent=getBinId()?'✅ クラウド同期中':'未設定';document.getElementById('setupmodal').classList.add('show');}
 function closeSetup(){document.getElementById('setupmodal').classList.remove('show');}
 async function saveApiKey(){
