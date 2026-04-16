@@ -479,7 +479,7 @@ async function onScanSuccess(code){
 async function lookupProduct(code){
   try{const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const d=await r.json();if(d.status===1&&d.product){const p=d.product;const name=p.product_name_ja||p.product_name_en||p.product_name||null;if(name)return name;}}catch(e){}
   try{const r=await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code);const d=await r.json();if(d.code==='OK'&&d.items&&d.items.length>0){return d.items[0].title||null;}}catch(e){}
-  try{const r=await fetch('https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&keyword='+encodeURIComponent(code)+'&hits=1');const d=await r.json();if(d.Items&&d.Items.length>0){return d.Items[0].Item.itemName||null;}}catch(e){}
+  try{const r=await fetch('https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+encodeURIComponent(code)+'&hits=1');const d=await r.json();if(d.Products&&d.Products.length>0){return d.Products[0].Product.productName||null;}}catch(e){}
   return null;
 }
 function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
