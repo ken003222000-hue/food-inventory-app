@@ -223,7 +223,7 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 </div>
 
 <script>
-const LSKEY='bichiku-items',LSBIN='bichiku-binid',LSAPI='bichiku-apikey',LSLOC='bichiku-locs',LSTYPE='bichiku-types';
+const LSKEY='bichiku-items',LSBIN='bichiku-binid',LSAPI='bichiku-apikey',LSLOC='bichiku-locs',LSTYPE='bichiku-types',LSBC='bichiku-barcode-cache';
 const SYNC_INTERVAL=20000;
 const SC={
   expired:{label:"期限切れ",color:"#ef4444",border:"#fca5a5"},
@@ -476,37 +476,15 @@ async function onScanSuccess(code){
   else{document.getElementById('sr-icon').textContent='❓';document.getElementById('sr-title').textContent='商品名が見つかりませんでした';document.getElementById('sr-name').textContent='手動で入力してください';}
   document.getElementById('sr-code').textContent='バーコード: '+code;
 }
+function bcCacheGet(code){try{const c=JSON.parse(localStorage.getItem(LSBC)||'{}');return c[code]||null;}catch(e){return null;}}
+function bcCacheSave(code,name){try{const c=JSON.parse(localStorage.getItem(LSBC)||'{}');c[code]=name;localStorage.setItem(LSBC,JSON.stringify(c));}catch(e){}}
 async function lookupProduct(code){
+  // ローカル辞書を最優先
+  const cached=bcCacheGet(code);if(cached)return cached;
   let brandFallback=null;
-  const AO='https://api.allorigins.win/raw?url=';
-  // 1. 楽天商品データベース（JANコード直接検索）
-  try{
-    const url='https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+code+'&hits=1';
-    const r=await fetch(AO+encodeURIComponent(url));
-    const d=await r.json();
-    if(d.Products&&d.Products.length>0){const n=d.Products[0].Product.productName;if(n)return n;}
-  }catch(e){}
-  // 2. 楽天市場商品検索（JANコードをキーワードに）
-  try{
-    const url='https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&keyword='+code+'&hits=1';
-    const r=await fetch(AO+encodeURIComponent(url));
-    const d=await r.json();
-    if(d.Items&&d.Items.length>0){const n=d.Items[0].Item.itemName;if(n)return n.replace(/【.*?】/g,'').replace(/\[.*?\]/g,'').split(/[\s　]/)[0]+'　'+n.replace(/【.*?】/g,'').replace(/\[.*?\]/g,'').split(/[\s　]/).slice(1,3).join(' ');}
-  }catch(e){}
-  // 3. Open Food Facts 日本版
+  // Open Food Facts 日本版
   try{
     const r=await fetch('https://jp.openfoodfacts.org/api/v0/product/'+code+'.json');
-    const d=await r.json();
-    if(d.status===1&&d.product){
-      const p=d.product;
-      const name=p.product_name_ja||p.product_name||p.product_name_en||p.abbreviated_product_name||null;
-      if(name)return name;
-      if(p.brands&&!brandFallback)brandFallback=p.brands.split(',')[0].trim();
-    }
-  }catch(e){}
-  // 4. Open Food Facts グローバル版
-  try{
-    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'?fields=product_name,product_name_ja,product_name_en,brands,abbreviated_product_name');
     const d=await r.json();
     if(d.status===1&&d.product){
       const p=d.product;
@@ -596,6 +574,9 @@ async function handleSave(){
   const obj={name,expiry:document.getElementById('fe').value.trim(),location:loc,qty:document.getElementById('fq').value.trim(),type,note:document.getElementById('fno').value.trim()};
   if(editId){items=items.map(i=>i.id===editId?{...i,...obj}:i);showToast('更新・保存しました ✓');}
   else{items=[...items,{id:String(nid++),...obj}];showToast('追加・保存しました ✓');}
+  // バーコードスキャン経由の場合、商品名をキャッシュに保存
+  if(scannedCode&&name)bcCacheSave(scannedCode,name);
+  scannedCode='';scannedName='';
   closeModal();lsSave();renderAll();cloudPush();
 }
 function openDel(id){delId=id;document.getElementById('delmodal').classList.add('show');}
