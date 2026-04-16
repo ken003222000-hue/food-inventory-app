@@ -477,9 +477,40 @@ async function onScanSuccess(code){
   document.getElementById('sr-code').textContent='バーコード: '+code;
 }
 async function lookupProduct(code){
-  try{const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const d=await r.json();if(d.status===1&&d.product){const p=d.product;const name=p.product_name_ja||p.product_name_en||p.product_name||null;if(name)return name;}}catch(e){}
-  try{const r=await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code);const d=await r.json();if(d.code==='OK'&&d.items&&d.items.length>0){return d.items[0].title||null;}}catch(e){}
-  try{const r=await fetch('https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+encodeURIComponent(code)+'&hits=1');const d=await r.json();if(d.Products&&d.Products.length>0){return d.Products[0].Product.productName||null;}}catch(e){}
+  // 1. Open Food Facts 日本版（JANコード対応、CORS有効）
+  try{
+    const r=await fetch('https://jp.openfoodfacts.org/api/v0/product/'+code+'.json');
+    const d=await r.json();
+    if(d.status===1&&d.product){
+      const p=d.product;
+      const name=p.product_name_ja||p.product_name||p.product_name_en||p.abbreviated_product_name||null;
+      if(name)return name;
+      if(p.brands)return p.brands.split(',')[0].trim();
+    }
+  }catch(e){}
+  // 2. Open Food Facts グローバル版
+  try{
+    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'?fields=product_name,product_name_ja,product_name_en,brands,abbreviated_product_name');
+    const d=await r.json();
+    if(d.status===1&&d.product){
+      const p=d.product;
+      const name=p.product_name_ja||p.product_name||p.product_name_en||p.abbreviated_product_name||null;
+      if(name)return name;
+      if(p.brands)return p.brands.split(',')[0].trim();
+    }
+  }catch(e){}
+  // 3. 楽天商品検索（JANコード）
+  try{
+    const r=await fetch('https://app.rakuten.co.jp/services/api/Product/Search/20170426?format=json&applicationId=1bd5b4bf-58da-41e0-b236-ce336e4ba0db&jan='+encodeURIComponent(code)+'&hits=1');
+    const d=await r.json();
+    if(d.Products&&d.Products.length>0){return d.Products[0].Product.productName||null;}
+  }catch(e){}
+  // 4. UPC Item DB
+  try{
+    const r=await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code);
+    const d=await r.json();
+    if(d.code==='OK'&&d.items&&d.items.length>0){return d.items[0].title||null;}
+  }catch(e){}
   return null;
 }
 function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
