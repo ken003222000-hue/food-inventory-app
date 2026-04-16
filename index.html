@@ -202,6 +202,9 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
     </div>
     <div id="setup-status" style="font-size:12px;color:#64748b;margin-top:8px;min-height:18px"></div>
     <button class="btn-sync-skip" onclick="closeSetup()">あとで設定する（このスマホのみで使用）</button>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">⚠️ データ修復</div>
+    <button class="btn-sync-skip" style="color:#dc2626;border-color:#fca5a5" onclick="resetToInitial()">データを初期184件にリセット（重複除去）</button>
   </div>
 </div>
 
@@ -582,6 +585,18 @@ function exportJSON(){
 }
 function openSetup(){document.getElementById('apikey-input').value=getApiKey();document.getElementById('setup-status').textContent=getBinId()?'✅ クラウド同期中':'未設定';document.getElementById('setupmodal').classList.add('show');}
 function closeSetup(){document.getElementById('setupmodal').classList.remove('show');}
+async function resetToInitial(){
+  if(!confirm('データを初期184件にリセットします。\n手動で追加した商品は削除されます。よろしいですか？'))return;
+  items=JSON.parse(JSON.stringify(INITIAL));
+  lsSave();
+  const key=getApiKey(),binId=getBinId();
+  if(key&&binId){
+    try{await fetch('https://api.jsonbin.io/v3/b/'+binId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':key},body:JSON.stringify({items})});}catch(e){}
+  }
+  closeSetup();
+  renderAll();
+  showToast('184件にリセットしました','#16a34a');
+}
 async function saveApiKey(){
   const key=document.getElementById('apikey-input').value.trim();if(!key){document.getElementById('setup-status').textContent='キーを入力してください';return;}
   document.getElementById('setup-status').textContent='確認中…';localStorage.setItem(LSAPI,key);localStorage.removeItem(LSBIN);
