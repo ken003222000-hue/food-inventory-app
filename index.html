@@ -449,7 +449,7 @@ async function cloudPush(){
 }
 function dedupItems(arr){
   const seen=new Set();
-  return arr.filter(i=>{const k=i.name.trim()+'|'+i.location.trim();if(seen.has(k))return false;seen.add(k);return true;});
+  return arr.filter(i=>{const k=i.name.trim()+'|'+i.location.trim()+'|'+(i.expiry||'').trim();if(seen.has(k))return false;seen.add(k);return true;});
 }
 async function cloudPull(){
   const key=getApiKey(),binId=getBinId();if(!key||!binId)return;
