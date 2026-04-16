@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="備蓄管理">
+<meta name="mobile-web-app-capable" content="yes">
+<title>🏠 備蓄在庫管理</title>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Hiragino Sans','Noto Sans JP',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+.hd{background:#0f172a;color:#fff;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top));position:sticky;top:0;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.hd-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hd-title{font-size:17px;font-weight:700}
+.hd-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.btn-add{background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:700;white-space:nowrap}
+.sbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:9px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.spills{display:flex;gap:6px;min-width:max-content}
+.sp{border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;border:1.5px solid;white-space:nowrap}
+.fbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:9px 12px}
+.frow{display:flex;gap:7px;flex-wrap:wrap}
+input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#1e293b}
+.fi{flex:1 1 150px}.fs{flex:1 1 120px}
+.list{padding:10px 12px;padding-bottom:40px}
+.card{background:#fff;border-radius:10px;padding:12px 13px;margin-bottom:8px;display:flex;align-items:center;gap:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);border:1.5px solid;border-left-width:4px}
+.ci{flex:1;min-width:0}
+.cn-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px}
+.cn{font-weight:600;font-size:14px;word-break:break-all}
+.badge{border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.cmeta{display:flex;gap:9px;flex-wrap:wrap}
+.cm{font-size:12px;color:#64748b}
+.cnote{font-size:11px;color:#94a3b8;margin-top:3px}
+.cbtns{display:flex;gap:5px;flex-shrink:0}
+.be{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;font-size:12px;color:#334155}
+.bd{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 10px;font-size:12px;color:#ef4444}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.ov.show{display:flex}
+.ovc{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+.ovc.show{display:flex}
+.modal{background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:540px;padding:22px 18px;padding-bottom:max(36px,calc(env(safe-area-inset-bottom)+16px));max-height:92vh;overflow-y:auto}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mtitle{font-size:17px;font-weight:700}
+.xbtn{background:none;border:none;font-size:24px;color:#64748b;padding:0 4px}
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px}
+.fin{width:100%;border:1.5px solid #cbd5e1;border-radius:9px;padding:10px 13px;font-size:15px;outline:none;box-sizing:border-box}
+.fin:focus{border-color:#3b82f6}
+.mbtns{display:flex;gap:10px;margin-top:18px}
+.bcx{flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:9px;padding:13px;font-size:15px;font-weight:600;color:#334155}
+.bsv{flex:2;background:#2563eb;color:#fff;border:none;border-radius:9px;padding:13px;font-size:15px;font-weight:700}
+.bsv:disabled{background:#93c5fd;cursor:not-allowed}
+.btn-scan{width:100%;background:#0f172a;color:#fff;border:none;border-radius:9px;padding:13px;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.scan-ov{position:fixed;inset:0;background:#000;z-index:200;display:none;flex-direction:column}
+.scan-ov.show{display:flex}
+.scan-header{background:#0f172a;color:#fff;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.scan-title{font-size:16px;font-weight:700}
+.scan-close{background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600}
+.scan-body{flex:1;position:relative;overflow:hidden}
+#reader{width:100%;height:100%}
+#reader video{width:100%!important;height:100%!important;object-fit:cover}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:260px;height:160px;border:3px solid #3b82f6;border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.55)}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#3b82f6,transparent);animation:scanline 2s linear infinite}
+@keyframes scanline{0%{top:0}100%{top:100%}}
+.scan-hint{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;text-align:center;padding:16px;font-size:14px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.scan-result{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.scan-result.show{display:flex}
+.sr-icon{font-size:52px;margin-bottom:14px}
+.sr-title{color:#fff;font-size:18px;font-weight:700;margin-bottom:8px}
+.sr-name{color:#86efac;font-size:16px;font-weight:600;margin-bottom:6px;word-break:break-all;max-width:300px}
+.sr-code{color:#94a3b8;font-size:13px;margin-bottom:26px}
+.sr-btns{display:flex;gap:10px;width:100%;max-width:300px}
+.btn-retry{flex:1;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600}
+.btn-use{flex:1;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700}
+.cbox{background:#fff;border-radius:16px;padding:28px 20px;width:100%;max-width:320px;text-align:center}
+.cico{font-size:38px;margin-bottom:10px}
+.ctitle{font-size:16px;font-weight:700;margin-bottom:6px}
+.csub{font-size:13px;color:#64748b;margin-bottom:22px}
+.cbts{display:flex;gap:10px}
+.bno{flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:9px;padding:12px;font-size:14px;font-weight:600}
+.byes{flex:1;background:#ef4444;color:#fff;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:700}
+.setup-box{background:#fff;border-radius:16px;width:100%;max-width:480px;padding:24px 20px;max-height:85vh;overflow-y:auto}
+.step{background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #3b82f6}
+.step-num{font-size:11px;font-weight:700;color:#3b82f6;margin-bottom:4px}
+.step-text{font-size:13px;line-height:1.6;color:#334155}
+.step-text a{color:#2563eb}
+.sync-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.sync-input{flex:1;border:1.5px solid #cbd5e1;border-radius:8px;padding:9px 12px;font-size:13px;outline:none}
+.btn-sync-save{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;white-space:nowrap}
+.btn-sync-skip{width:100%;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:9px;padding:12px;font-size:14px;font-weight:600;margin-top:10px;color:#64748b}
+.toast{position:fixed;bottom:max(28px,calc(env(safe-area-inset-bottom)+10px));left:50%;transform:translateX(-50%);color:#fff;border-radius:24px;padding:11px 26px;font-size:14px;font-weight:600;z-index:500;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none;white-space:nowrap;display:none}
+.toast.show{display:block}
+.empty{text-align:center;padding:50px 20px;color:#94a3b8;font-size:14px}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-row">
+    <div>
+      <div class="hd-title">🏠 備蓄在庫管理</div>
+      <div class="hd-sub" id="hd-sub">読み込み中…</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="openSetup()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px">⚙️</button>
+      <button class="btn-add" onclick="openAdd()">＋ 追加</button>
+    </div>
+  </div>
+</div>
+<div class="sbar"><div class="spills" id="spills"></div></div>
+<div class="fbar">
+  <div class="frow">
+    <input type="text" class="fi" id="search" placeholder="🔍 商品名・場所で検索" oninput="renderList()">
+    <select class="fs" id="floc" onchange="renderList()"><option value="">📦 全場所</option></select>
+    <select class="fs" id="fsort" onchange="renderList()">
+      <option value="expiry_asc">期限 近い順</option>
+      <option value="expiry_desc">期限 遠い順</option>
+      <option value="name">商品名順</option>
+      <option value="location">場所順</option>
+    </select>
+  </div>
+</div>
+<div class="list" id="list"></div>
+
+<!-- Add/Edit Modal -->
+<div class="ov" id="modal" onclick="ovClick(event,'modal')">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mtitle" id="mtitle">追加</div>
+      <button class="xbtn" onclick="closeModal()">✕</button>
+    </div>
+    <button class="btn-scan" onclick="openScanner()">
+      <span style="font-size:20px">📷</span> バーコードをスキャンして商品名を取得
+    </button>
+    <div class="fg"><label class="fl">商品名 *</label><input class="fin" id="fn" placeholder="例：カレー職人中辛"></div>
+    <div class="fg"><label class="fl">賞味期限</label><input class="fin" id="fe" placeholder="例：27/03/31"></div>
+    <div class="fg"><label class="fl">収納場所</label><input class="fin" id="fl2" placeholder="例：白コンテナA"></div>
+    <div class="fg"><label class="fl">個数</label><input class="fin" id="fq" placeholder="例：3"></div>
+    <div class="fg"><label class="fl">保存状態</label><input class="fin" id="ft" placeholder="例：パウチ・缶詰・袋"></div>
+    <div class="fg"><label class="fl">備考</label><input class="fin" id="fno" placeholder="例：１箱20入り"></div>
+    <div class="mbtns">
+      <button class="bcx" onclick="closeModal()">キャンセル</button>
+      <button class="bsv" id="bsv" onclick="handleSave()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barcode Scanner -->
+<div class="scan-ov" id="scan-ov">
+  <div class="scan-header">
+    <div class="scan-title">📷 バーコードスキャン</div>
+    <button class="scan-close" onclick="closeScanner()">閉じる</button>
+  </div>
+  <div class="scan-body">
+    <div id="reader"></div>
+    <div class="scan-frame"><div class="scan-line"></div></div>
+    <div class="scan-hint">バーコードを枠内に合わせてください</div>
+    <div class="scan-result" id="scan-result">
+      <div class="sr-icon" id="sr-icon">🔍</div>
+      <div class="sr-title" id="sr-title">検索中…</div>
+      <div class="sr-name" id="sr-name"></div>
+      <div class="sr-code" id="sr-code"></div>
+      <div class="sr-btns">
+        <button class="btn-retry" onclick="retryScanner()">📷 もう一度</button>
+        <button class="btn-use" onclick="useScannedProduct()">この商品を使う</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div class="ovc" id="delmodal" onclick="ovClick(event,'delmodal')">
+  <div class="cbox">
+    <div class="cico">🗑️</div>
+    <div class="ctitle">削除しますか？</div>
+    <div class="csub">この操作は元に戻せません</div>
+    <div class="cbts">
+      <button class="bno" onclick="closeDelModal()">キャンセル</button>
+      <button class="byes" onclick="confirmDel()">削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Setup Modal -->
+<div class="ovc" id="setupmodal" onclick="ovClick(event,'setupmodal')">
+  <div class="setup-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:700">⚙️ クラウド同期の設定</div>
+      <button class="xbtn" onclick="closeSetup()">✕</button>
+    </div>
+    <p style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:1.6">AndroidとiPhoneで同じデータを共有するには、<strong>JSONBin.io</strong>（無料）のAPIキーが必要です。</p>
+    <div class="step"><div class="step-num">STEP 1</div><div class="step-text"><a href="https://jsonbin.io" target="_blank">jsonbin.io</a> を開いて無料登録</div></div>
+    <div class="step"><div class="step-num">STEP 2</div><div class="step-text">ログイン後、右上のアイコン →「API Keys」→「Master Key」をコピー</div></div>
+    <div class="step"><div class="step-num">STEP 3</div><div class="step-text">下にMaster Keyを貼り付けて「保存」</div></div>
+    <div class="sync-row">
+      <input class="sync-input" id="apikey-input" placeholder="Master Keyを貼り付け" type="password">
+      <button class="btn-sync-save" onclick="saveApiKey()">保存</button>
+    </div>
+    <div id="setup-status" style="font-size:12px;color:#64748b;margin-top:8px;min-height:18px"></div>
+    <button class="btn-sync-skip" onclick="closeSetup()">あとで設定する（このスマホのみで使用）</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LSKEY='bichiku-items',LSBIN='bichiku-binid',LSAPI='bichiku-apikey';
+const SYNC_INTERVAL=20000;
+const SC={
+  expired:{label:"期限切れ",color:"#ef4444",border:"#fca5a5"},
+  danger:{label:"30日以内",color:"#f97316",border:"#fdba74"},
+  warning:{label:"3ヶ月以内",color:"#ca8a04",border:"#fde047"},
+  soon:{label:"6ヶ月以内",color:"#16a34a",border:"#86efac"},
+  ok:{label:"余裕あり",color:"#2563eb",border:"#93c5fd"},
+  nodate:{label:"期限なし",color:"#9ca3af",border:"#e5e7eb"},
+};
+const INITIAL=[
+{id:"2",name:"くろがね堅パン",type:"ペール缶",expiry:"29/11/30",qty:"34",location:"ペール缶",note:""},
+{id:"3",name:"ライフスープ",type:"パウチ",expiry:"29/08/31",qty:"3",location:"白コンテナG",note:""},
+{id:"4",name:"尾西ひだまりパン チョコ",type:"箱",expiry:"29/07/31",qty:"1",location:"段ボールＫ",note:""},
+{id:"5",name:"チョコえいようかん",type:"箱",expiry:"29/07/29",qty:"10",location:"段ボールＦ",note:""},
+{id:"6",name:"ミルクスティック",type:"袋",expiry:"29/06/30",qty:"2",location:"白コンテナD",note:""},
+{id:"9",name:"マイルドカレーライスセット",type:"袋",expiry:"29/05/31",qty:"12",location:"白コンテナG",note:""},
+{id:"10",name:"アルファ化米100g",type:"パウチ",expiry:"29/05/31",qty:"10",location:"白コンテナF",note:""},
+{id:"11",name:"カレー職人中辛",type:"パウチ",expiry:"29/05/31",qty:"4",location:"白コンテナF",note:""},
+{id:"12",name:"カレー職人中辛",type:"パウチ",expiry:"29/05/31",qty:"3",location:"白コンテナD",note:""},
+{id:"13",name:"野菜たっぷりきのこスープ",type:"パウチ",expiry:"29/05/30",qty:"3",location:"白コンテナD",note:""},
+{id:"14",name:"野菜たっぷりかぼちゃのスープ",type:"パウチ",expiry:"29/05/28",qty:"3",location:"白コンテナD",note:""},
+{id:"15",name:"野菜ジュース190g",type:"缶",expiry:"29/05/27",qty:"2",location:"白コンテナF",note:""},
+{id:"17",name:"野菜たっぷり豆のスープ",type:"パウチ",expiry:"29/05/01",qty:"3",location:"白コンテナD",note:""},
+{id:"18",name:"備蓄水2L",type:"ペットボトル",expiry:"29/04/20",qty:"12",location:"仕事部屋押し入れ",note:"１箱６本入り"},
+{id:"19",name:"お米（無洗米）5kg",type:"袋",expiry:"29/03/20",qty:"9",location:"ＳＲの一番奥",note:""},
+{id:"20",name:"カレー職人甘口（３袋入り）",type:"パウチ",expiry:"29/02/28",qty:"9",location:"白コンテナD",note:"1袋３入り"},
+{id:"21",name:"アルファ化米１４種類セット",type:"箱",expiry:"29/02/28",qty:"1",location:"仕事部屋押し入れ",note:""},
+{id:"22",name:"カンパン",type:"缶",expiry:"29/02/14",qty:"2",location:"白コンテナF",note:""},
+{id:"23",name:"アルファ化米５種10食セット",type:"箱",expiry:"29/01/21",qty:"1",location:"仕事部屋押し入れ",note:""},
+{id:"24",name:"カンパン",type:"缶",expiry:"29/01/06",qty:"1",location:"白コンテナF",note:""},
+{id:"25",name:"ビスコ",type:"缶",expiry:"28/12/31",qty:"2",location:"白コンテナF",note:""},
+{id:"26",name:"ハーベスト（ビスケット）",type:"缶",expiry:"28/12/12",qty:"3",location:"白コンテナD",note:""},
+{id:"27",name:"パインアメ",type:"缶",expiry:"28/10/31",qty:"1",location:"白コンテナF",note:""},
+{id:"28",name:"切り餅1kg",type:"袋",expiry:"28/10/31",qty:"10",location:"段ボールD",note:""},
+{id:"29",name:"ランチョンミート300g",type:"缶詰",expiry:"28/06/28",qty:"1",location:"白コンテナF",note:""},
+{id:"30",name:"オイルサーディン",type:"缶詰",expiry:"28/02/22",qty:"8",location:"白コンテナF",note:""},
+{id:"31",name:"だし&ペプチドスープ500g",type:"パウチ",expiry:"27/07/17",qty:"1",location:"白コンテナF",note:""},
+{id:"32",name:"いわしオイル漬 燻製風味",type:"缶詰",expiry:"27/05/01",qty:"30",location:"段ボールP",note:""},
+{id:"33",name:"マヌカハニー500g",type:"ペットボトル",expiry:"27/04/30",qty:"1",location:"白コンテナG",note:""},
+{id:"35",name:"マヌカハニー250g",type:"ペットボトル",expiry:"27/03/31",qty:"3",location:"白コンテナG",note:""},
+{id:"36",name:"上海風スペアリブ",type:"缶詰",expiry:"27/02/13",qty:"2",location:"白コンテナE",note:""},
+{id:"37",name:"八丁味噌300g",type:"パウチ",expiry:"27/02/08",qty:"1",location:"白コンテナF",note:""},
+{id:"38",name:"あいこちゃん まぐろみそ煮",type:"缶詰",expiry:"27/02/01",qty:"24",location:"白コンテナA",note:""},
+{id:"39",name:"一日分の野菜ジュース190g",type:"缶",expiry:"27/01/31",qty:"80",location:"SR",note:"１箱20入り"},
+{id:"40",name:"グラタンマカロニ160g",type:"袋",expiry:"27/01/31",qty:"2",location:"白コンテナF",note:""},
+{id:"41",name:"海老のアヒージョ",type:"缶詰",expiry:"27/01/19",qty:"4",location:"白コンテナF",note:"60g"},
+{id:"43",name:"八丁味噌300g",type:"パウチ",expiry:"27/01/17",qty:"2",location:"白コンテナG",note:""},
+{id:"44",name:"豚バラの炭火焼き",type:"パウチ",expiry:"27/01/03",qty:"4",location:"段ボールG",note:""},
+{id:"46",name:"マヌカハニーはちみつ1kg",type:"瓶",expiry:"26/12/14",qty:"2",location:"白コンテナＥ",note:""},
+{id:"47",name:"鶏の炭火焼",type:"パウチ",expiry:"26/12/09",qty:"22",location:"段ボールG",note:""},
+{id:"49",name:"鶏の炭火焼 たれ味",type:"パウチ",expiry:"26/12/09",qty:"2",location:"段ボールG",note:""},
+{id:"50",name:"あいこちゃん ツナ油漬",type:"缶詰",expiry:"26/12/01",qty:"12",location:"白コンテナC",note:""},
+{id:"51",name:"あいこちゃん 牛カルビそぼろ",type:"缶詰",expiry:"26/12/01",qty:"72",location:"白コンテナA",note:""},
+{id:"52",name:"クックゼラチン",type:"箱",expiry:"26/11/30",qty:"2",location:"白ペール缶Ｄ",note:""},
+{id:"53",name:"パスタ700g",type:"袋",expiry:"26/11/30",qty:"6",location:"白コンテナＥ",note:""},
+{id:"55",name:"一日分の野菜ジュース190g",type:"缶",expiry:"26/10/31",qty:"80",location:"白４段ラック",note:"１箱20入り"},
+{id:"57",name:"オイルサーディン",type:"缶詰",expiry:"26/10/13",qty:"2",location:"白コンテナF",note:""},
+{id:"58",name:"小いか醤油煮",type:"缶詰",expiry:"26/10/01",qty:"4",location:"白コンテナＥ",note:""},
+{id:"60",name:"インスタントコーヒー マンデリン200g",type:"瓶",expiry:"26/08/31",qty:"2",location:"白コンテナD",note:""},
+{id:"62",name:"パイナップルスライス",type:"缶詰",expiry:"26/08/23",qty:"12",location:"白コンテナB",note:""},
+{id:"63",name:"さばオリーブオイル漬け",type:"缶詰",expiry:"26/08/17",qty:"3",location:"白コンテナG",note:""},
+{id:"64",name:"あいこちゃん さばみそ煮",type:"缶詰",expiry:"26/08/01",qty:"6",location:"白コンテナG",note:""},
+{id:"65",name:"あいこちゃん ツナ油漬ガーリック",type:"缶詰",expiry:"26/08/01",qty:"12",location:"白コンテナG",note:""},
+{id:"66",name:"早ゆでパスタ500g",type:"袋",expiry:"26/07/31",qty:"1",location:"白コンテナD",note:""},
+{id:"67",name:"さばオリーブオイル漬け",type:"缶詰",expiry:"26/07/03",qty:"6",location:"白コンテナG",note:""},
+{id:"68",name:"あいこちゃん いかの味付け",type:"缶詰",expiry:"26/07/01",qty:"5",location:"白コンテナG",note:""},
+{id:"69",name:"そいたん 牛タンそぼろ",type:"缶詰",expiry:"26/07/01",qty:"24",location:"白コンテナA",note:""},
+{id:"70",name:"豚の角煮",type:"缶詰",expiry:"26/07/01",qty:"12",location:"段ボールM",note:"1箱"},
+{id:"71",name:"紅鮭水煮",type:"缶詰",expiry:"26/07/01",qty:"24",location:"段ボールQ",note:""},
+{id:"73",name:"パスタ500g",type:"袋",expiry:"26/06/09",qty:"4",location:"白コンテナＥ",note:""},
+{id:"74",name:"わしたポーク200g",type:"缶詰",expiry:"26/06/08",qty:"15",location:"白コンテナE",note:""},
+{id:"75",name:"あいこちゃん さば水煮",type:"缶詰",expiry:"26/06/01",qty:"24",location:"白コンテナC",note:""},
+{id:"76",name:"スモークオイルサーモントラウト",type:"缶詰",expiry:"26/06/01",qty:"12",location:"段ボールN",note:"1箱"},
+{id:"77",name:"あいこちゃん まぐろ醤油煮",type:"缶詰",expiry:"26/05/01",qty:"24",location:"白コンテナC",note:""},
+{id:"78",name:"あいこちゃん いわし水煮",type:"缶詰",expiry:"26/05/01",qty:"48",location:"白コンテナC",note:""},
+{id:"80",name:"うずらの卵水煮",type:"缶詰",expiry:"26/04/30",qty:"6",location:"白コンテナG",note:""},
+{id:"81",name:"焼き鳥ゆずこしょう味",type:"缶詰",expiry:"26/04/28",qty:"6",location:"白コンテナG",note:""},
+{id:"82",name:"あいこちゃん いわし生姜醤油味",type:"缶詰",expiry:"26/02/01",qty:"24",location:"段ボールO",note:""},
+{id:"83",name:"おしるこ160g",type:"パウチ",expiry:"26/01/17",qty:"6",location:"白コンテナF",note:""},
+{id:"86",name:"EXVオリーブオイル456g",type:"瓶",expiry:"25/12/14",qty:"3",location:"白４段ラック",note:""},
+{id:"88",name:"エクストラダークチョコレート1kg",type:"袋",expiry:"25/12/05",qty:"4",location:"段ボールＣ",note:""},
+{id:"91",name:"八方だし1L",type:"ペットボトル",expiry:"25/11/04",qty:"1",location:"白コンテナH",note:""},
+{id:"93",name:"メープルシロップ250g",type:"瓶",expiry:"25/10/20",qty:"1",location:"白コンテナF",note:""},
+{id:"95",name:"EXVオリーブオイル456g",type:"瓶",expiry:"25/09/27",qty:"4",location:"白コンテナD",note:""},
+{id:"99",name:"スイスミス マシュマロ入りコーア",type:"箱",expiry:"25/07/03",qty:"120",location:"白４段ラック",note:"１箱60入り"},
+{id:"100",name:"牛丼",type:"パウチ",expiry:"25/06/30",qty:"6",location:"白コンテナH",note:""},
+{id:"101",name:"ミートボール",type:"パウチ",expiry:"25/05/31",qty:"50",location:"段ボールＢ",note:""},
+{id:"102",name:"中華丼",type:"パウチ",expiry:"25/05/28",qty:"6",location:"白コンテナH",note:""},
+{id:"103",name:"親子丼",type:"パウチ",expiry:"25/04/30",qty:"6",location:"白コンテナH",note:""},
+{id:"104",name:"マンゴーチャンク",type:"缶詰",expiry:"25/04/21",qty:"12",location:"白コンテナB",note:""},
+{id:"110",name:"黒豆1kg",type:"袋",expiry:"25/02/28",qty:"2",location:"白コンテナF",note:""},
+{id:"114",name:"国産大豆1kg",type:"袋",expiry:"25/02/01",qty:"5",location:"白コンテナF",note:""},
+{id:"137",name:"米粉クッキー（３本）",type:"パウチ",expiry:"32/05/31",qty:"2",location:"白コンテナF",note:""},
+{id:"138",name:"ピンクロックソルト1kg",type:"袋",expiry:"",qty:"2",location:"白コンテナG",note:""},
+{id:"139",name:"伯方の塩1kg",type:"袋",expiry:"",qty:"1",location:"白コンテナG",note:""},
+{id:"141",name:"花藻塩500g",type:"袋",expiry:"",qty:"3",location:"白コンテナG",note:""},
+{id:"143",name:"ぬちまーす250g",type:"袋",expiry:"",qty:"8",location:"白コンテナF",note:""},
+{id:"146",name:"すだき糖",type:"袋",expiry:"",qty:"4",location:"白コンテナD",note:""},
+{id:"147",name:"てんさい糖",type:"袋",expiry:"",qty:"3",location:"白コンテナD",note:""},
+{id:"148",name:"てんさい糖600g",type:"袋",expiry:"",qty:"10",location:"段ボールＪ",note:"１箱10入り"},
+{id:"149",name:"八丁味噌300g",type:"パウチ",expiry:"28/05/29",qty:"4",location:"白コンテナG",note:""},
+{id:"150",name:"井村屋 ゆであずき",type:"缶詰",expiry:"28/05/01",qty:"9",location:"白コンテナB",note:""},
+{id:"151",name:"ミックスビーンズ",type:"缶詰",expiry:"28/03/31",qty:"4",location:"白コンテナB",note:""},
+{id:"152",name:"携帯おにぎり鮭 アルファ米",type:"パウチ",expiry:"30/12/31",qty:"2",location:"白４段ラック",note:""},
+{id:"153",name:"携帯おにぎり五目おこわ",type:"パウチ",expiry:"30/12/31",qty:"2",location:"白４段ラック",note:""},
+{id:"154",name:"携帯おにぎりわかめ",type:"パウチ",expiry:"30/12/31",qty:"2",location:"白４段ラック",note:""},
+{id:"156",name:"携帯おにぎり昆布",type:"パウチ",expiry:"30/12/31",qty:"2",location:"白４段ラック",note:""},
+{id:"157",name:"クランベリー",type:"パウチ",expiry:"27/03/24",qty:"3",location:"白コンテナG",note:""},
+{id:"158",name:"レーズン",type:"パウチ",expiry:"27/03/26",qty:"1",location:"白コンテナG",note:""},
+{id:"159",name:"マヌカハニー",type:"ペット",expiry:"28/01/01",qty:"2",location:"白コンテナG",note:""},
+{id:"160",name:"ナチュラル、ナッツ、フルーツ",type:"パウチ",expiry:"27/03/22",qty:"2",location:"白コンテナA",note:""},
+{id:"164",name:"乾燥全卵",type:"袋",expiry:"26/11/05",qty:"1",location:"白コンテナB",note:""},
+{id:"165",name:"卵白乾燥",type:"袋",expiry:"27/06/30",qty:"1",location:"白コンテナB",note:""},
+{id:"166",name:"塩こしょう",type:"パウチ",expiry:"27/05/01",qty:"2",location:"白コンテA",note:""},
+{id:"167",name:"パスタ",type:"パウチ",expiry:"26/09/14",qty:"6",location:"白コンテナB",note:""},
+{id:"168",name:"煮干しだし",type:"パウチ",expiry:"26/10/08",qty:"4",location:"白コンテナA",note:""},
+{id:"169",name:"ゼラチン",type:"パウチ",expiry:"28/11/01",qty:"4",location:"白コンテナＢ",note:""},
+{id:"170",name:"正露丸",type:"瓶",expiry:"27/02/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"172",name:"ツムラ中将湯",type:"袋",expiry:"30/02/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"173",name:"バファリン 子供",type:"袋",expiry:"27/02/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"174",name:"ビタミンB2",type:"瓶",expiry:"28/05/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"175",name:"パンらクミン 整腸剤",type:"瓶",expiry:"29/01/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"176",name:"葛根湯粉",type:"袋",expiry:"30/10/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"177",name:"下痢止めビオフェルミン製薬",type:"錠剤",expiry:"28/08/01",qty:"1",location:"白ペール缶Ｄ",note:""},
+{id:"178",name:"ポカリ",type:"箱粉",expiry:"27/03/01",qty:"10",location:"ダンボールQ",note:""},
+{id:"180",name:"エキナセア",type:"錠剤",expiry:"28/11/01",qty:"1",location:"ダンボールQ",note:""},
+{id:"181",name:"脱脂粉乳",type:"袋",expiry:"27/02/07",qty:"2",location:"段ボールＹ",note:""},
+{id:"182",name:"5年おでんかん",type:"缶",expiry:"31/09/01",qty:"12",location:"段ボールz",note:""},
+{id:"183",name:"ごま油",type:"缶",expiry:"28/07/17",qty:"2",location:"段ボール2階",note:""},
+{id:"184",name:"にがり",type:"ボトル",expiry:"28/02/03",qty:"2",location:"段ボール2階",note:""},
+{id:"185",name:"3年おでん缶",type:"缶",expiry:"28/12/01",qty:"12",location:"段ボールＷ",note:""},
+];
+
+let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null;
+let scanner=null,scannedCode='',scannedName='';
+window._fst='';
+
+function parseExp(s){if(!s||!s.trim())return null;const m=s.trim().match(/^(\d{2})\/(\d{1,2})\/(\d{1,2})$/);if(!m)return null;return new Date(2000+parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));}
+function fmtExp(s){const d=parseExp(s);if(!d)return s||'―';return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
+function getSt(s){if(!s)return'nodate';const d=parseExp(s);if(!d)return'nodate';const t=new Date();t.setHours(0,0,0,0);const diff=Math.floor((d-t)/86400000);if(diff<0)return'expired';if(diff<=30)return'danger';if(diff<=90)return'warning';if(diff<=180)return'soon';return'ok';}
+function getDays(s){const d=parseExp(s);if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.floor((d-t)/86400000);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function lsSave(){try{localStorage.setItem(LSKEY,JSON.stringify(items));}catch(e){}}
+function lsLoad(){try{const s=localStorage.getItem(LSKEY);if(s){const p=JSON.parse(s);if(Array.isArray(p)&&p.length>0){items=p;return true;}}}catch(e){}return false;}
+function getApiKey(){return localStorage.getItem(LSAPI)||'';}
+function getBinId(){return localStorage.getItem(LSBIN)||'';}
+
+async function cloudPush(){
+  const key=getApiKey();if(!key)return;
+  const binId=getBinId();syncing=true;updateHeader();
+  try{
+    if(binId){await fetch('https://api.jsonbin.io/v3/b/'+binId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Versioning':'false'},body:JSON.stringify({items})});}
+    else{const r=await fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'bichiku'},body:JSON.stringify({items})});const d=await r.json();if(d.metadata&&d.metadata.id)localStorage.setItem(LSBIN,d.metadata.id);}
+    lastSync=new Date();
+  }catch(e){}
+  syncing=false;updateHeader();
+}
+async function cloudPull(){
+  const key=getApiKey(),binId=getBinId();if(!key||!binId)return;
+  try{const r=await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{headers:{'X-Master-Key':key}});const d=await r.json();if(d.record&&d.record.items&&Array.isArray(d.record.items)){items=d.record.items;lsSave();lastSync=new Date();renderAll();}}catch(e){}
+}
+
+function openScanner(){
+  document.getElementById('scan-ov').classList.add('show');
+  document.getElementById('scan-result').classList.remove('show');
+  if(scanner){try{scanner.resume();}catch(e){}return;}
+  scanner=new Html5Qrcode('reader');
+  scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:260,height:160},aspectRatio:1.5},onScanSuccess,()=>{}).catch(err=>{showToast('カメラが使えません','#ef4444');closeScanner();});
+}
+async function onScanSuccess(code){
+  if(!scanner)return;
+  try{await scanner.pause();}catch(e){}
+  scannedCode=code;
+  document.getElementById('sr-icon').textContent='🔍';
+  document.getElementById('sr-title').textContent='商品名を検索中…';
+  document.getElementById('sr-name').textContent='';
+  document.getElementById('sr-code').textContent='バーコード: '+code;
+  document.getElementById('scan-result').classList.add('show');
+  const name=await lookupProduct(code);
+  scannedName=name||'';
+  if(name){document.getElementById('sr-icon').textContent='✅';document.getElementById('sr-title').textContent='商品が見つかりました！';document.getElementById('sr-name').textContent=name;}
+  else{document.getElementById('sr-icon').textContent='❓';document.getElementById('sr-title').textContent='商品名が見つかりませんでした';document.getElementById('sr-name').textContent='手動で入力してください';}
+  document.getElementById('sr-code').textContent='バーコード: '+code;
+}
+async function lookupProduct(code){
+  try{const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const d=await r.json();if(d.status===1&&d.product){const p=d.product;return p.product_name_ja||p.product_name_en||p.product_name||null;}}catch(e){}
+  return null;
+}
+function useScannedProduct(){if(scannedName)document.getElementById('fn').value=scannedName;closeScanner();}
+function retryScanner(){document.getElementById('scan-result').classList.remove('show');if(scanner)try{scanner.resume();}catch(e){}}
+function closeScanner(){document.getElementById('scan-ov').classList.remove('show');if(scanner){scanner.stop().then(()=>{scanner=null;}).catch(()=>{scanner=null;});}}
+
+function init(){
+  if(!lsLoad()){items=JSON.parse(JSON.stringify(INITIAL));lsSave();}
+  renderAll();
+  const key=getApiKey(),binId=getBinId();
+  if(key&&binId)cloudPull();else if(key&&!binId)cloudPush();
+  setInterval(()=>{if(getApiKey()&&getBinId())cloudPull();},SYNC_INTERVAL);
+}
+function updateHeader(){
+  const st={expired:0,danger:0,warning:0,soon:0,ok:0,nodate:0};
+  items.forEach(i=>st[getSt(i.expiry)]++);
+  const syncTxt=syncing?' ・ 💾保存中…':lastSync?' ・ ✅'+lastSync.getHours()+':'+String(lastSync.getMinutes()).padStart(2,'0'):'';
+  document.getElementById('hd-sub').textContent=items.length+'件 ・ 期限切れ '+st.expired+'件 ・ 30日以内 '+st.danger+'件'+syncTxt;
+  return st;
+}
+function renderAll(){
+  const st=updateHeader();
+  const fst=window._fst||'';
+  document.getElementById('spills').innerHTML=Object.entries(SC).map(([k,c])=>{const a=fst===k;return`<button class="sp" onclick="toggleFst('${k}')" style="background:${a?c.color:'#f8fafc'};color:${a?'#fff':'#374151'};border-color:${a?c.color:c.border}">${c.label} ${st[k]}</button>`;}).join('');
+  const locs=[...new Set(items.map(i=>i.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const curLoc=document.getElementById('floc').value;
+  document.getElementById('floc').innerHTML='<option value="">📦 全場所</option>'+locs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
+  if(locs.includes(curLoc))document.getElementById('floc').value=curLoc;
+  renderList();
+}
+function toggleFst(k){window._fst=(window._fst===k)?'':k;renderAll();}
+function renderList(){
+  const search=document.getElementById('search').value,loc=document.getElementById('floc').value,sort=document.getElementById('fsort').value,fst=window._fst||'';
+  let list=[...items];
+  if(search)list=list.filter(i=>i.name.includes(search)||i.location.includes(search));
+  if(loc)list=list.filter(i=>i.location===loc);
+  if(fst)list=list.filter(i=>getSt(i.expiry)===fst);
+  list.sort((a,b)=>{
+    if(sort==='expiry_asc'||sort==='expiry_desc'){const da=parseExp(a.expiry),db=parseExp(b.expiry);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return sort==='expiry_asc'?da-db:db-da;}
+    if(sort==='name')return a.name.localeCompare(b.name,'ja');
+    if(sort==='location')return a.location.localeCompare(b.location,'ja');
+    return 0;
+  });
+  const el=document.getElementById('list');
+  if(!list.length){el.innerHTML='<div class="empty">該当なし</div>';return;}
+  el.innerHTML=list.map(item=>{
+    const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
+    let ds='';if(days!==null){if(days<0)ds=' ('+Math.abs(days)+'日超過)';else if(days===0)ds=' (今日まで)';else ds=' あと'+days+'日';}
+    return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><div class="ci"><div class="cn-row"><span class="cn">${esc(item.name)}</span><span class="badge" style="background:${c.color}">${c.label}</span></div><div class="cmeta"><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">× ${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}</div>${item.note?`<div class="cnote">💬 ${esc(item.note)}</div>`:''}</div><div class="cbtns"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
+  }).join('');
+}
+function openAdd(){editId=null;document.getElementById('mtitle').textContent='新しいアイテムを追加';document.getElementById('bsv').textContent='追加する';['fn','fe','fl2','fq','ft','fno'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal').classList.add('show');}
+function openEdit(id){const item=items.find(i=>i.id===id);if(!item)return;editId=id;document.getElementById('mtitle').textContent='アイテムを編集';document.getElementById('bsv').textContent='保存する';document.getElementById('fn').value=item.name||'';document.getElementById('fe').value=item.expiry||'';document.getElementById('fl2').value=item.location||'';document.getElementById('fq').value=item.qty||'';document.getElementById('ft').value=item.type||'';document.getElementById('fno').value=item.note||'';document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+async function handleSave(){
+  const name=document.getElementById('fn').value.trim();if(!name)return;
+  const obj={name,expiry:document.getElementById('fe').value.trim(),location:document.getElementById('fl2').value.trim(),qty:document.getElementById('fq').value.trim(),type:document.getElementById('ft').value.trim(),note:document.getElementById('fno').value.trim()};
+  if(editId){items=items.map(i=>i.id===editId?{...i,...obj}:i);showToast('更新・保存しました ✓');}
+  else{items=[...items,{id:String(nid++),...obj}];showToast('追加・保存しました ✓');}
+  closeModal();lsSave();renderAll();cloudPush();
+}
+function openDel(id){delId=id;document.getElementById('delmodal').classList.add('show');}
+function closeDelModal(){document.getElementById('delmodal').classList.remove('show');delId=null;}
+async function confirmDel(){items=items.filter(i=>i.id!==delId);closeDelModal();lsSave();renderAll();showToast('削除しました','#ef4444');cloudPush();}
+function openSetup(){document.getElementById('apikey-input').value=getApiKey();document.getElementById('setup-status').textContent=getBinId()?'✅ クラウド同期中':'未設定';document.getElementById('setupmodal').classList.add('show');}
+function closeSetup(){document.getElementById('setupmodal').classList.remove('show');}
+async function saveApiKey(){
+  const key=document.getElementById('apikey-input').value.trim();if(!key){document.getElementById('setup-status').textContent='キーを入力してください';return;}
+  document.getElementById('setup-status').textContent='確認中…';localStorage.setItem(LSAPI,key);localStorage.removeItem(LSBIN);
+  await cloudPush();
+  const binId=getBinId();
+  if(binId){document.getElementById('setup-status').textContent='✅ 設定完了！';showToast('クラウド同期 ON ✓','#16a34a');setTimeout(closeSetup,1500);}
+  else{document.getElementById('setup-status').textContent='❌ APIキーを確認してください';}
+}
+function ovClick(e,id){if(e.target===e.currentTarget)document.getElementById(id).classList.remove('show');}
+let toastTimer;
+function showToast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color||'#16a34a';t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+init();
+</script>
+</body>
+</html>
