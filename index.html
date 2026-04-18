@@ -32,7 +32,11 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 .tbl th{background:#f1f5f9;color:#475569;font-weight:700;padding:9px 10px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;position:sticky;top:0;z-index:1}
 .tbl td{padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;white-space:nowrap}
 .tbl tr:hover td{background:#f8fafc}
-.tbl .t-name{font-weight:600;color:#1e293b;min-width:120px}
+.tbl .t-name{font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;max-width:0}
+.th-name{position:relative;user-select:none}
+.col-resize{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;z-index:2}
+.col-resize::after{content:'';position:absolute;right:2px;top:20%;bottom:20%;width:2px;background:#cbd5e1;border-radius:2px}
+.col-resize:hover::after,.col-resize.dragging::after{background:#3b82f6}
 .tbl .t-exp{white-space:nowrap}
 .tbl .t-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
 .tbl .t-btn{background:none;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;margin-left:3px}
@@ -434,6 +438,9 @@ const INITIAL=[
 ];
 
 let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null,listMgrTarget='';
+let nameColWidth=150;
+function applyNameColWidth(){document.querySelectorAll('.tbl .t-name').forEach(el=>el.style.width=nameColWidth+'px');const th=document.querySelector('.tbl th.th-name');if(th)th.style.width=nameColWidth+'px';}
+function initColResize(){const th=document.querySelector('.tbl th.th-name');if(!th)return;const handle=th.querySelector('.col-resize');if(!handle)return;let startX,startW;function onMove(e){const x=e.touches?e.touches[0].clientX:e.clientX;nameColWidth=Math.max(50,startW+(x-startX));applyNameColWidth();e.preventDefault();}function onEnd(){handle.classList.remove('dragging');document.removeEventListener('mousemove',onMove);document.removeEventListener('touchmove',onMove);document.removeEventListener('mouseup',onEnd);document.removeEventListener('touchend',onEnd);}handle.addEventListener('mousedown',function(e){startX=e.clientX;startW=nameColWidth;handle.classList.add('dragging');document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onEnd);e.preventDefault();});handle.addEventListener('touchstart',function(e){startX=e.touches[0].clientX;startW=nameColWidth;handle.classList.add('dragging');document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onEnd);e.preventDefault();},{passive:false});}
 let scanner=null,scannedCode='',scannedName='';
 let viewMode='card';
 function toggleView(){viewMode=viewMode==='card'?'table':'card';document.getElementById('viewbtn').textContent=viewMode==='card'?'☰ 一覧':'⊞ カード';renderList();}
@@ -568,11 +575,12 @@ function renderList(){
   if(!list.length){el.className='list';el.innerHTML='<div class="empty">該当なし</div>';return;}
   if(viewMode==='table'){
     el.className='tbl-wrap';
-    el.innerHTML='<table class="tbl"><thead><tr><th>状態</th><th>商品名</th><th>賞味期限</th><th>場所</th><th>個数</th><th>保存状態</th><th>備考</th><th></th></tr></thead><tbody>'+list.map(item=>{
+    el.innerHTML='<table class="tbl"><thead><tr><th>状態</th><th class="th-name">商品名<div class="col-resize"></div></th><th>賞味期限</th><th>場所</th><th>個数</th><th>保存状態</th><th>備考</th><th></th></tr></thead><tbody>'+list.map(item=>{
       const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
       let ds='';if(days!==null){if(days<0)ds=' <span style="color:'+c.color+';font-size:11px">('+Math.abs(days)+'日超過)</span>';else if(days===0)ds=' <span style="font-size:11px">(今日)</span>';else if(days<=30)ds=' <span style="font-size:11px">(あと'+days+'日)</span>';}
       return`<tr><td><span class="t-badge" style="background:${c.color}">${c.label}</span></td><td class="t-name">${esc(item.name)}</td><td class="t-exp">${fmtExp(item.expiry)||'-'}${ds}</td><td>${esc(item.location)}</td><td>${esc(item.qty)||'-'}</td><td>${esc(item.type)||'-'}</td><td style="color:#64748b;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.note)||''}</td><td style="white-space:nowrap"><button class="t-btn edit" onclick="openEdit('${item.id}')">編集</button><button class="t-btn del" onclick="openDel('${item.id}')">削除</button></td></tr>`;
     }).join('')+'</tbody></table>';
+    applyNameColWidth();initColResize();
   } else {
     el.className='list';
     el.innerHTML=list.map(item=>{
