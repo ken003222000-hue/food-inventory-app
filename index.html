@@ -121,6 +121,7 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <button onclick="exportJSON()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px" title="JSONエクスポート">📥</button>
+      <button onclick="openHelp()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px">❓</button>
       <button onclick="openSetup()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:13px">⚙️</button>
       <button class="btn-add" onclick="openAdd()">＋ 追加</button>
     </div>
@@ -197,6 +198,63 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
     <div class="cbts">
       <button class="bno" onclick="closeDelModal()">キャンセル</button>
       <button class="byes" onclick="confirmDel()">削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="ov" id="helpmodal" onclick="ovClick(event,'helpmodal')">
+  <div class="modal" style="border-radius:18px 18px 0 0">
+    <div class="mhd">
+      <div class="mtitle">❓ 使い方ガイド</div>
+      <button class="xbtn" onclick="closeHelp()">✕</button>
+    </div>
+    <div style="font-size:14px;line-height:1.7;color:#1e293b">
+
+      <div style="background:#f0f9ff;border-left:4px solid #3b82f6;border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:13px;color:#1e40af">
+        画面を上下にスクロールして全部読めます
+      </div>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">📦 商品を追加する</div>
+      <p style="margin-bottom:6px">右上の <strong>＋ 追加</strong> ボタンをタップします。</p>
+      <p style="margin-bottom:6px"><strong>📷 バーコードをスキャン</strong> — カメラでバーコードを読み取ると商品名が自動で入ります。</p>
+      <p style="margin-bottom:14px">バーコードがない場合は商品名を直接入力してください。</p>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">📅 賞味期限の入力方法</div>
+      <p style="margin-bottom:6px"><strong>YY/MM/DD</strong> の形式で入力します。</p>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px">
+        例：2027年3月31日 → <strong>27/03/31</strong>
+      </div>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">🔴 色の意味</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="background:#ef4444;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap">期限切れ</span><span style="font-size:13px">賞味期限が過ぎています</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="background:#f97316;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap">まもなく</span><span style="font-size:13px">30日以内に期限が来ます</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="background:#eab308;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap">3ヶ月以内</span><span style="font-size:13px">3ヶ月以内に期限が来ます</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="background:#22c55e;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap">正常</span><span style="font-size:13px">まだ余裕があります</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="background:#94a3b8;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap">期限なし</span><span style="font-size:13px">賞味期限が未入力です</span></div>
+      </div>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">🔍 絞り込み・検索</div>
+      <p style="margin-bottom:6px">画面上部のカラーのタグ（全て・期限切れ・まもなく…）でステータス別に絞り込めます。</p>
+      <p style="margin-bottom:6px">検索ボックスに商品名や場所を入力すると絞り込めます。</p>
+      <p style="margin-bottom:14px">場所のプルダウンで特定の収納場所だけ表示できます。</p>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">✏️ 編集・削除</div>
+      <p style="margin-bottom:6px">各商品の <strong>編集</strong> ボタンで内容を変更できます。</p>
+      <p style="margin-bottom:14px"><strong>削除</strong> ボタンで商品を消せます（元に戻せません）。</p>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">☰ 表示の切り替え</div>
+      <p style="margin-bottom:6px">右上の <strong>☰ 一覧</strong> ボタンでスプレッドシート風の一覧表示に切り替わります。</p>
+      <p style="margin-bottom:14px">一覧表示では「商品名」列の右端をドラッグして幅を調整できます。</p>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">☁️ クラウド同期</div>
+      <p style="margin-bottom:6px">⚙️ 設定ボタンからBin IDとAPIキーを設定すると、スマホ・タブレット・PCで在庫データが共有できます。</p>
+      <p style="margin-bottom:14px">設定済みの場合、20秒ごとに自動保存されます。</p>
+
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px">📥 データのエクスポート</div>
+      <p style="margin-bottom:4px">📥 ボタンでデータをJSONファイルとして保存できます。バックアップに使えます。</p>
+
     </div>
   </div>
 </div>
@@ -631,6 +689,8 @@ function exportJSON(){
   a.click();
   showToast('JSONをダウンロードしました','#2563eb');
 }
+function openHelp(){document.getElementById('helpmodal').classList.add('show');}
+function closeHelp(){document.getElementById('helpmodal').classList.remove('show');}
 function openSetup(){document.getElementById('apikey-input').value=getApiKey();document.getElementById('setup-status').textContent=getBinId()?'✅ クラウド同期中':'未設定';document.getElementById('setupmodal').classList.add('show');}
 function closeSetup(){document.getElementById('setupmodal').classList.remove('show');}
 async function resetToInitial(){
