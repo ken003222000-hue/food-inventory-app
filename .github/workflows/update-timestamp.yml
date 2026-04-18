@@ -1,0 +1,25 @@
+name: Update build timestamp
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  timestamp:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update BUILD_DATE to Japan time
+        run: |
+          NOW=$(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M')
+          sed -i "s/const BUILD_DATE='[^']*'/const BUILD_DATE='$NOW'/" index.html
+          echo "Set BUILD_DATE to $NOW"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet && echo "No change" || (git add index.html && git commit -m "chore: update build timestamp" && git push)

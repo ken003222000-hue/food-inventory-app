@@ -34,8 +34,8 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 .tbl tr:hover td{background:#f8fafc}
 .tbl .t-name{font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;max-width:0}
 .th-name{position:relative;user-select:none}
-.col-resize{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:col-resize;z-index:2}
-.col-resize::after{content:'';position:absolute;right:2px;top:20%;bottom:20%;width:2px;background:#cbd5e1;border-radius:2px}
+.col-resize{position:absolute;right:-5px;top:0;bottom:0;width:16px;cursor:col-resize;z-index:10;touch-action:none}
+.col-resize::after{content:'';position:absolute;left:6px;top:15%;bottom:15%;width:3px;background:#cbd5e1;border-radius:2px}
 .col-resize:hover::after,.col-resize.dragging::after{background:#3b82f6}
 .tbl .t-exp{white-space:nowrap}
 .tbl .t-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
@@ -438,9 +438,9 @@ const INITIAL=[
 ];
 
 let items=[],editId=null,delId=null,nid=9000,syncing=false,lastSync=null,listMgrTarget='';
-let nameColWidth=150;
-function applyNameColWidth(){document.querySelectorAll('.tbl .t-name').forEach(el=>el.style.width=nameColWidth+'px');const th=document.querySelector('.tbl th.th-name');if(th)th.style.width=nameColWidth+'px';}
-function initColResize(){const th=document.querySelector('.tbl th.th-name');if(!th)return;const handle=th.querySelector('.col-resize');if(!handle)return;let startX,startW;function onMove(e){const x=e.touches?e.touches[0].clientX:e.clientX;nameColWidth=Math.max(50,startW+(x-startX));applyNameColWidth();e.preventDefault();}function onEnd(){handle.classList.remove('dragging');document.removeEventListener('mousemove',onMove);document.removeEventListener('touchmove',onMove);document.removeEventListener('mouseup',onEnd);document.removeEventListener('touchend',onEnd);}handle.addEventListener('mousedown',function(e){startX=e.clientX;startW=nameColWidth;handle.classList.add('dragging');document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onEnd);e.preventDefault();});handle.addEventListener('touchstart',function(e){startX=e.touches[0].clientX;startW=nameColWidth;handle.classList.add('dragging');document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onEnd);e.preventDefault();},{passive:false});}
+let nameColWidth=150,_rDrag=false,_rStartX=0,_rStartW=0;
+function applyNameColWidth(){document.querySelectorAll('.tbl .t-name').forEach(el=>{el.style.width=nameColWidth+'px';el.style.maxWidth=nameColWidth+'px';});const th=document.querySelector('.tbl th.th-name');if(th)th.style.width=nameColWidth+'px';}
+function initColResize(){const handle=document.querySelector('.tbl .col-resize');if(!handle)return;handle.addEventListener('pointerdown',function(e){_rDrag=true;_rStartX=e.clientX;_rStartW=nameColWidth;handle.classList.add('dragging');handle.setPointerCapture(e.pointerId);e.preventDefault();});handle.addEventListener('pointermove',function(e){if(!_rDrag)return;nameColWidth=Math.max(50,_rStartW+(e.clientX-_rStartX));applyNameColWidth();});handle.addEventListener('pointerup',function(){_rDrag=false;handle.classList.remove('dragging');});}
 let scanner=null,scannedCode='',scannedName='';
 let viewMode='card';
 function toggleView(){viewMode=viewMode==='card'?'table':'card';document.getElementById('viewbtn').textContent=viewMode==='card'?'☰ 一覧':'⊞ カード';renderList();}
