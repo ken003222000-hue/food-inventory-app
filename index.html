@@ -30,7 +30,7 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 .tbl-wrap{overflow-x:auto;padding:8px 12px 40px}
 .tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
 .tbl th{background:#f1f5f9;color:#475569;font-weight:700;padding:9px 10px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;position:sticky;top:0;z-index:1}
-.tbl td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tbl td{padding:5px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;white-space:nowrap}
 .tbl tr:hover td{background:#f8fafc}
 .tbl .t-name{font-weight:600;color:#1e293b;min-width:120px}
 .tbl .t-exp{white-space:nowrap}
@@ -38,11 +38,15 @@ input[type=text],input[type=password],select{border:1.5px solid #cbd5e1;border-r
 .tbl .t-btn{background:none;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;margin-left:3px}
 .tbl .t-btn.edit{color:#2563eb;border-color:#93c5fd}
 .tbl .t-btn.del{color:#ef4444;border-color:#fca5a5}
-.card{background:#fff;border-radius:6px;padding:5px 8px;margin-bottom:3px;display:flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);border:1.5px solid;border-left-width:4px;overflow:hidden}
-.cn{font-weight:600;font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0}
-.cm{font-size:11px;color:#64748b;white-space:nowrap;flex-shrink:0}
-.cbtns{display:flex;gap:4px;flex-shrink:0}
+.card{background:#fff;border-radius:8px;padding:7px 10px;margin-bottom:4px;display:flex;align-items:center;gap:7px;box-shadow:0 1px 2px rgba(0,0,0,.06);border:1.5px solid;border-left-width:4px}
+.ci{flex:1;min-width:0}
+.cn-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px}
+.cn{font-weight:600;font-size:13px;word-break:break-all}
+.badge{border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.cmeta{display:flex;gap:9px;flex-wrap:wrap}
+.cm{font-size:12px;color:#64748b}
+.cnote{font-size:11px;color:#94a3b8;margin-top:1px}
+.cbtns{display:flex;gap:5px;flex-shrink:0}
 .be{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;font-size:12px;color:#334155}
 .bd{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 10px;font-size:12px;color:#ef4444}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
@@ -566,7 +570,7 @@ function renderList(){
     el.className='tbl-wrap';
     el.innerHTML='<table class="tbl"><thead><tr><th>状態</th><th>商品名</th><th>賞味期限</th><th>場所</th><th>個数</th><th>保存状態</th><th>備考</th><th></th></tr></thead><tbody>'+list.map(item=>{
       const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
-      let ds='';if(days!==null){if(days<0)ds='<br><span style="color:'+c.color+';font-size:11px">'+Math.abs(days)+'日超過</span>';else if(days===0)ds='<br><span style="font-size:11px">今日まで</span>';else if(days<=30)ds='<br><span style="font-size:11px">あと'+days+'日</span>';}
+      let ds='';if(days!==null){if(days<0)ds=' <span style="color:'+c.color+';font-size:11px">('+Math.abs(days)+'日超過)</span>';else if(days===0)ds=' <span style="font-size:11px">(今日)</span>';else if(days<=30)ds=' <span style="font-size:11px">(あと'+days+'日)</span>';}
       return`<tr><td><span class="t-badge" style="background:${c.color}">${c.label}</span></td><td class="t-name">${esc(item.name)}</td><td class="t-exp">${fmtExp(item.expiry)||'-'}${ds}</td><td>${esc(item.location)}</td><td>${esc(item.qty)||'-'}</td><td>${esc(item.type)||'-'}</td><td style="color:#64748b;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.note)||''}</td><td style="white-space:nowrap"><button class="t-btn edit" onclick="openEdit('${item.id}')">編集</button><button class="t-btn del" onclick="openDel('${item.id}')">削除</button></td></tr>`;
     }).join('')+'</tbody></table>';
   } else {
@@ -574,7 +578,7 @@ function renderList(){
     el.innerHTML=list.map(item=>{
       const st=getSt(item.expiry),c=SC[st],days=getDays(item.expiry);
       let ds='';if(days!==null){if(days<0)ds=' ('+Math.abs(days)+'日超過)';else if(days===0)ds=' (今日まで)';else ds=' あと'+days+'日';}
-      return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><span class="badge" style="background:${c.color}">${c.label}</span><span class="cn">${esc(item.name)}</span><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">×${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}<div class="cbtns" style="margin-left:auto"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
+      return`<div class="card" style="border-color:${c.border};border-left-color:${c.color}"><div class="ci"><div class="cn-row"><span class="cn">${esc(item.name)}</span><span class="badge" style="background:${c.color}">${c.label}</span></div><div class="cmeta"><span class="cm">📅 ${fmtExp(item.expiry)}${ds}</span><span class="cm">📦 ${esc(item.location)}</span>${item.qty?`<span class="cm">× ${esc(item.qty)}</span>`:''}${item.type?`<span class="cm" style="color:#94a3b8">[${esc(item.type)}]</span>`:''}</div>${item.note?`<div class="cnote">💬 ${esc(item.note)}</div>`:''}</div><div class="cbtns"><button class="be" onclick="openEdit('${item.id}')">編集</button><button class="bd" onclick="openDel('${item.id}')">削除</button></div></div>`;
     }).join('');
   }
 }
